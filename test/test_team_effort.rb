@@ -1,35 +1,28 @@
-require "minitest/autorun"
-require_relative "../lib/team_effort"
+require 'minitest/autorun'
+require_relative '../lib/team_effort'
+require 'tempfile'
 
 describe TeamEffort do
-  describe "#work" do
-    it "performs work in a child processes" do
-      test_class = Class.new do
-        include TeamEffort
-        require 'tempfile'
-
-        def do_some_work
-          mutex = Mutex.new
-          output_io = Tempfile.new('mumble')
-          begin
-            data = %w|one two three|
-            work(data) do |item|
-              mutex.synchronize do
-                output_io.puts Process.pid
-              end
-            end
-            output_io.rewind
-            output = output_io.read
-          ensure
-            output_io.close
-            output_io.unlink
+  describe '#work' do
+    it 'performs work in child processes' do
+      mutex = Mutex.new
+      output_io = Tempfile.new('mumble')
+      output = nil
+      begin
+        data = %w|one two three|
+        TeamEffort.work(data) do |item|
+          mutex.synchronize do
+            output_io.puts Process.pid
+            output_io.flush
           end
-          output
         end
+        output_io.rewind
+        output = output_io.read
+      ensure
+        output_io.close
+        output_io.unlink
       end
 
-      test = test_class.new
-      output = test.do_some_work
       lines = output.split(/\n/)
       lines.size.must_equal 3
       lines.each do |line|

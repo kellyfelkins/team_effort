@@ -1,10 +1,10 @@
 require "team_effort/version"
 
 module TeamEffort
-  def work(enumerable, max_process_count = 4)
+  def self.work(enumerable, max_process_count = 4)
     pids = []
 
-    enumerable.each do |*args|
+    enumerable.each do |args|
       if pids.size == max_process_count
         finished_pid = Process.wait
         pids.delete finished_pid
