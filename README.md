@@ -20,15 +20,15 @@ Or install it yourself as:
 
 ## Usage
 
-To do work in child processes, include TeamEffort in your class and
-call `work`:
+To do work in child processes just call `TeamEffort.work` with a collection
+of items to process and a block:
 
 ```ruby
 class ProcessALotOfStuff
 
   def some_method
-    # stuff = a lot of stuff from somewhere
-    work(stuff) do |item|
+    # collection = a lot of stuff from somewhere
+    TeamEffort.work(collection) do |item|
       # do some work on item
     end
   end
@@ -40,8 +40,8 @@ You may specify the number of child processes with the work method:
  
 ```ruby
 def some_method
-  # stuff = a lot of stuff from somewhere
-  work(stuff, 3) do |item| # do the work using 3 child processes
+  # collection = a lot of stuff from somewhere
+  TeamEffort.work(collection, 3) do |item| # do the work using 3 child processes
     # do some work on item
   end
 end
