@@ -1,8 +1,23 @@
 # TeamEffort
 
-Team Effort is a module that makes it easy to dispatch work to child
-processes allowing you to speed processing by taking advantage of
-multiple cores.
+TeamEffort makes it easy to process a collection with child processes
+allowing you to take advantage of multiple cores. By replacing
+
+```ruby
+    collection.each do |item|
+      # do some work on item
+    end
+```
+
+with 
+
+```ruby
+    TeamEffort.work(collection) do |item|
+      # do some work on item
+    end
+```
+
+you get each item processed in a new child process.
 
 ## Installation
 
@@ -20,39 +35,72 @@ Or install it yourself as:
 
 ## Usage
 
-To do work in child processes just call `TeamEffort.work` with a collection
-of items to process and a block:
+To do work in child processes just call `TeamEffort.work` with a
+collection of items to process and a block:
 
 ```ruby
-class ProcessALotOfStuff
-
-  def some_method
-    # collection = a lot of stuff from somewhere
     TeamEffort.work(collection) do |item|
       # do some work on item
     end
-  end
-  
-end
 ```
 
 You may specify the number of child processes with the work method:
  
 ```ruby
-def some_method
-  # collection = a lot of stuff from somewhere
-  TeamEffort.work(collection, 3) do |item| # do the work using 3 child processes
-    # do some work on item
-  end
-end
+    TeamEffort.work(collection, 3) do |item| # do the work using 3 child processes
+      # do some work on item
+    end
 ```
 
 The number of child processes defaults to 4.
 
-The work method will create a new child process for each item in the
-enumeration using ruby's Process.fork so there is overhead on each
-item processed. Team Effort works best when there is substantial work
-to be performed on each item to minimize overhead.
+In rails you need to reestablish your ActiveRecord connection in the
+child process:
+
+```ruby
+    ActiveRecord::Base.clear_all_connections!
+    begin
+      TeamEffort.work(collection, max_process_count) do |item|
+    
+        ActiveRecord::Base.establish_connection
+    
+        # do some work with active record
+    
+      end
+    ensure
+      ActiveRecord::Base.establish_connection
+    end    
+```
+
+Logging can be messy when multiple processes are writing to the same
+io channel. One approach is to wrap logging statements in a
+synchronize block:
+
+```ruby
+    def pid_logger(msg)
+      @mutex ||= Mutex.new
+      @mutex.synchronize do
+        puts "[#{Process.pid} at #{Time.now.strftime('%H:%M:%S')}] #{msg}"
+      end
+    end
+```
+
+## Discussion
+
+TeamEffort uses child processes to do concurrent processing. To review
+the unix process model I recommend Jesse Storimer's
+[Working With Unix Processes][1].
+ 
+[1] http://www.jstorimer.com/products/working-with-unix-processes
+
+A disadvantage to using child processes for concurrent processing is
+the work required to create the child process and the duplication of
+memory.  For this reason you should only use TeamEffort on collections
+where there is significant processing to be performed on each item.
+
+An advantage of using child processes is that the memory is reclaimed
+when the child process goes away. This can make long running jobs
+resilient to memory leaks.
 
 ## Contributing
 
