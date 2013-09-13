@@ -91,7 +91,7 @@ TeamEffort uses child processes to do concurrent processing. To review
 the unix process model I recommend Jesse Storimer's
 [Working With Unix Processes][1].
  
-[1] http://www.jstorimer.com/products/working-with-unix-processes
+[1]: http://www.jstorimer.com/products/working-with-unix-processes
 
 A disadvantage to using child processes for concurrent processing is
 the work required to create the child process and the duplication of
