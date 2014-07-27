@@ -29,5 +29,71 @@ describe TeamEffort do
         line.must_match /^\d+$/
       end
     end
+
+
+    it 'ignores other child process completions' do
+      output_io_class = Class.new do
+        def initialize
+          @mutex = Mutex.new
+          @io = Tempfile.new('mumble')
+        end
+
+        def log(text)
+          @mutex.synchronize do
+            @io.puts text
+            @io.flush
+          end
+        end
+
+        def lines
+          @io.rewind
+          @io.read.split(/\n/)
+        end
+      end
+
+      output_io = output_io_class.new
+
+      require 'socket'
+
+      unmanaged_child_reader, unmanaged_child_writer = Socket.pair(:UNIX, :DGRAM, 0)
+      maxlen = 1000
+
+      fork do
+        output_io.log "unmanaged starting"
+        unmanaged_child_writer.close
+        output_io.log "unmanaged waiting for IO"
+        message = unmanaged_child_reader.recv(maxlen)
+        output_io.log "unmanaged received >#{message}< and exiting"
+        output_io.log "unmanaged finishing"
+      end
+
+      sleep 1
+
+      TeamEffort.work([1, 2], 1) do |index|
+        output_io.log "task #{index} starting"
+        unmanaged_child_reader.close
+        if index == 1
+          output_io.log "task 1 waking unmanaged process"
+          unmanaged_child_writer.send("wake up", 0)
+          unmanaged_child_writer.close
+          sleep 1
+        end
+        output_io.log "task #{index} finishing"
+      end
+
+      lines = output_io.lines
+
+      lines.must_equal [
+                         'unmanaged starting',
+                         'unmanaged waiting for IO',
+                         'task 1 starting',
+                         'task 1 waking unmanaged process',
+                         'unmanaged received >wake up< and exiting',
+                         'unmanaged finishing',
+                         'task 1 finishing',
+                         'task 2 starting',
+                         'task 2 finishing',
+                       ]
+    end
   end
 end

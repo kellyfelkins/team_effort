@@ -1,11 +1,11 @@
-require "team_effort/version"
+require_relative "team_effort/version"
 
 module TeamEffort
   def self.work(enumerable, max_process_count = 4)
     pids = []
 
     enumerable.each do |args|
-      if pids.size == max_process_count
+      while pids.size == max_process_count
         finished_pid = Process.wait
         pids.delete finished_pid
       end
