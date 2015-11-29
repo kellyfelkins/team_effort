@@ -16,7 +16,7 @@ module TeamEffort
         yield args
       end
       item = index + 1
-      puts "TE started:#{pids.last} ##{item} of #{total} (#{(item.to_f / total.to_f * 100).round(2)}%)"
+      puts "TE started:#{pids.last} ##{item} of #{total} (#{(item.to_f / total.to_f * 100).round(1)}%)"
     end
 
     while !pids.empty?
