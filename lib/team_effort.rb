@@ -15,7 +15,8 @@ module TeamEffort
       pids << fork do
         yield args
       end
-      puts "TE started:#{index} pid:#{pids.last} #{(index.to_f / total.to_f * 100).round(2)}"
+      item = index + 1
+      puts "TE started:#{pids.last} ##{item} of #{total} (#{(item.to_f / total.to_f * 100).round(2)}%)"
     end
 
     while !pids.empty?
