@@ -2,17 +2,20 @@ require_relative "team_effort/version"
 
 module TeamEffort
   def self.work(enumerable, max_process_count = 4)
+    total = enumerable.count
     pids = []
 
-    enumerable.each do |args|
+    enumerable.each_with_index do |args, index|
       while pids.size == max_process_count
         finished_pid = Process.wait
         pids.delete finished_pid
+        puts "TE finished:#{finished_pid}"
       end
 
       pids << fork do
         yield args
       end
+      puts "TE started:#{index} pid:#{pids.last} #{(index.to_f / total.to_f * 100).round(2)}"
     end
 
     while !pids.empty?

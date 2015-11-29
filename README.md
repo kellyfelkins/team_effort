@@ -72,19 +72,6 @@ child process:
     end    
 ```
 
-Logging can be messy when multiple processes are writing to the same
-io channel. One approach is to wrap logging statements in a
-synchronize block:
-
-```ruby
-    def pid_logger(msg)
-      @mutex ||= Mutex.new
-      @mutex.synchronize do
-        puts "[#{Process.pid} at #{Time.now.strftime('%H:%M:%S')}] #{msg}"
-      end
-    end
-```
-
 ## Discussion
 
 TeamEffort uses child processes to do concurrent processing. To review
