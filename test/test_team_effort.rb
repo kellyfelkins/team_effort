@@ -30,6 +30,19 @@ describe TeamEffort do
       end
     end
 
+    it 'invokes an optional proc when it completes an item' do
+      data = %w|one two three|
+      proc_data = []
+      # proc = ->(item_index, max_items) {proc_data << [item_index, max_items]}
+      progress_proc = ->(index, max_index) { puts "#{ sprintf("%3i%", index.to_f / max_index * 100) }" }
+      TeamEffort.work(data, 1, progress_proc: progress_proc) {}
+
+      proc_data.must_equal [
+                             [1, 3],
+                             [2, 3],
+                             [3, 3],
+                           ]
+    end
 
     it 'ignores other child process completions' do
       output_io_class = Class.new do

@@ -51,8 +51,18 @@ You may specify the number of child processes with the work method:
       # do some work on item
     end
 ```
-
 The number of child processes defaults to 4.
+
+You can pass in a proc to receive completion notifications.
+ 
+```irb
+> data = %w|one two three|
+> progress_proc = ->(index, max_index) { puts "#{ sprintf("%3i%", index.to_f / max_index * 100) }" }
+> TeamEffort.work(data, 1, progress_proc: progress_proc) {}
+ 33%
+ 66%
+100%
+```
 
 In rails you need to reestablish your ActiveRecord connection in the
 child process:
