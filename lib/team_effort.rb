@@ -1,33 +1,27 @@
 require_relative "team_effort/version"
 
 module TeamEffort
-  def self.work(enumerable, max_process_count = 4)
-    total = enumerable.count
+  def self.work(enumerable, max_process_count = 4, progress_proc: nil)
     pids = []
+    max_count = enumerable.count
+    completed_count = 0
 
-    enumerable.each_with_index do |args, index|
+    enumerable.each do |args|
       while pids.size == max_process_count
         finished_pid = Process.wait
-        delete_pid(pids, finished_pid)
+        pids.delete finished_pid
+        progress_proc.call(completed_count += 1, max_count) if progress_proc
       end
 
-      pids << [fork { yield args }, Time.now]
-      item = index + 1
-      puts "TE started:#{pids.last} ##{item} of #{total} (#{(item.to_f / total.to_f * 100).round(1)}%)"
+      pids << fork do
+        yield args
+      end
     end
 
     while !pids.empty?
       finished_pid = Process.wait
-      delete_pid(pids, finished_pid)
-    end
-  end
-
-  def self.delete_pid(pids, pid)
-    pids.delete_if do |p, t|
-      if p == pid
-        puts "TE finished:#{pid} in #{(Time.now - t).round(1)} seconds"
-        true
-      end
+      pids.delete finished_pid
+      progress_proc.call(completed_count += 1, max_count) if progress_proc
     end
   end
 end
