@@ -26,16 +26,32 @@ describe TeamEffort do
       lines = output.split(/\n/)
       lines.size.must_equal 3
       lines.each do |line|
-        line.must_match /^\d+$/
+        line.must_match(/^\d+$/)
       end
+    end
+
+    it 'exits when a child process fails' do
+      data = [8, 4, 2, 0, 4, 8]
+
+      err = -> {
+        $stderr = File.open('/dev/null', 'w')
+        begin
+          TeamEffort.work(data, 1) do |item|
+            16 / item
+          end
+        ensure
+          $stderr.close
+          $stderr = STDERR
+        end
+      }.must_raise RuntimeError
+      err.message.must_match /TeamEffort child process failed when processing > 0 </
     end
 
     it 'invokes an optional proc when it completes an item' do
       data = %w|one two three|
       proc_data = []
-      # proc = ->(item_index, max_items) {proc_data << [item_index, max_items]}
-      progress_proc = ->(index, max_index) { puts "#{ sprintf("%3i%", index.to_f / max_index * 100) }" }
-      TeamEffort.work(data, 1, progress_proc: progress_proc) {}
+      proc = ->(item_index, max_items) { proc_data << [item_index, max_items] }
+      TeamEffort.work(data, 1, progress_proc: proc) {}
 
       proc_data.must_equal [
                              [1, 3],
