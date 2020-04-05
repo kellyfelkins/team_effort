@@ -64,6 +64,25 @@ You can pass in a proc to receive completion notifications.
 100%
 ```
 
+Your proc can return a result that will be provided the next time the proc is called.
+
+```irb
+> data = 1..1_000
+> progress_proc = ->(index, max_index, previous_percent_complete) {
+>   percent_complete = sprintf("%3i%", index.to_f / max_index * 100)
+>   if percent_complete != previous_percent_complete # Only print when the percent complete changes
+>     puts "#{ percent_complete }"
+>   end
+>   percent_complete
+> }
+> TeamEffort.work(data, progress_proc: progress_proc) {}
+  0%
+  1%
+  2%
+  3%
+...
+```
+ 
 In rails you need to reestablish your ActiveRecord connection in the
 child process:
 
