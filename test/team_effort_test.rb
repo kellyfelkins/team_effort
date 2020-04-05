@@ -24,16 +24,16 @@ describe TeamEffort do
       end
 
       lines = output.split(/\n/)
-      lines.size.must_equal 3
+      _(lines.size).must_equal 3
       lines.each do |line|
-        line.must_match(/^\d+$/)
+        _(line).must_match(/^\d+$/)
       end
     end
 
     it 'exits when a child process fails' do
       data = [8, 4, 2, 0, 4, 8]
 
-      err = -> {
+      err = _(-> {
         $stderr = File.open('/dev/null', 'w')
         begin
           TeamEffort.work(data, 1) do |item|
@@ -43,8 +43,8 @@ describe TeamEffort do
           $stderr.close
           $stderr = STDERR
         end
-      }.must_raise RuntimeError
-      err.message.must_match /TeamEffort child process failed when processing > 0 </
+      }).must_raise RuntimeError
+      _(err.message).must_match %r/TeamEffort child process failed when processing > 0 </
     end
 
     it 'invokes an optional proc when it completes an item' do
@@ -53,11 +53,27 @@ describe TeamEffort do
       proc = ->(item_index, max_items) { proc_data << [item_index, max_items] }
       TeamEffort.work(data, 1, progress_proc: proc) {}
 
-      proc_data.must_equal [
+      _(proc_data).must_equal [
                              [1, 3],
                              [2, 3],
                              [3, 3],
                            ]
+    end
+
+    it 'invokes an optional proc with the previous result of the optional proc when it completes an item' do
+      data = %w|one two three|
+      proc_data = []
+      proc = ->(item_index, max_items, previous_result) {
+        if previous_result == 2
+          proc_data << [item_index, max_items]
+        end
+        item_index
+      }
+      TeamEffort.work(data, 1, progress_proc: proc) {}
+
+      _(proc_data).must_equal [
+                                [3, 3]
+                              ]
     end
 
     it 'ignores other child process completions' do
@@ -112,7 +128,7 @@ describe TeamEffort do
 
       lines = output_io.lines
 
-      lines.must_equal [
+      _(lines).must_equal [
                          'unmanaged starting',
                          'unmanaged waiting for IO',
                          'task 1 starting',
